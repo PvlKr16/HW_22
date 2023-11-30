@@ -1,0 +1,5 @@
+flask==3.0.0
+celery==5.3.6
+pillow==10.1.0
+werkzeug~=3.0.1
+redis==5.0.1
