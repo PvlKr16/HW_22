@@ -65,6 +65,9 @@ def unsubscribe():
 
 
 """
+docker pull redis
+docker run -p 6379:6379 --name my-redis -d redis
+
 celery -A app.celery worker --loglevel=info
 celery -A app.celery flower
 celery -A celery_ beat
