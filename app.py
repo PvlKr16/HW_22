@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify
 from celery import group, chain
 from werkzeug.utils import secure_filename
 
-from celery_ import celery, process_image, send_files, subscribe_user, unsubscribe_user
+from celery_ import celery_app, process_image, send_files, subscribe_user, unsubscribe_user
 from mail import add_email, remove_email
 
 
@@ -27,10 +27,12 @@ def process_images(receiver):
         file.save(os.path.join(f'src_files/{order}/', secure_filename(f'{file.filename}')))
     counter = 1
     for file in os.listdir(f'src_files/{order}/'):
-        task1 = process_image.s(order=order, src_filename=file)
-        task2 = send_files.s(order=order, receiver=receiver, filename=file)
+        task1 = process_image.s(order=order, receiver=receiver, src_filename=file)
+        task2 = send_files.s()
         task_chain = chain(task1 | task2)
+        # import pdb; pdb.set_trace()
         result = task_chain.apply_async()
+        # import pdb; pdb.set_trace()
         results[f'{order}_{counter}'] = result.id
         counter += 1
 
@@ -39,7 +41,7 @@ def process_images(receiver):
 
 @app.route('/status/<result_id>', methods=['GET'])
 def get_group_status(result_id):
-    result = celery.GroupResult.restore(result_id)  # <class 'celery.result.GroupResult'>
+    result = celery_app.GroupResult.restore(result_id)  # <class 'celery.result.GroupResult'>
     if result:
         status = result.completed_count() / len(result)
         if status < 1.0:
@@ -68,7 +70,7 @@ def unsubscribe():
 docker pull redis
 docker run -p 6379:6379 --name my-redis -d redis
 
-celery -A app.celery worker --loglevel=info
+celery -A app.celery_app worker --loglevel=info
 celery -A app.celery flower
 celery -A celery_ beat
 """

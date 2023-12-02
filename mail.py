@@ -26,7 +26,7 @@ def send_email(order_id: str, receiver: str, filename: str):
         email['From'] = SMTP_USER
         email['To'] = receiver
 
-        with open(filename, 'rb') as attachment:
+        with open(os.path.join(f'src_files/{order_id}/', filename), 'rb') as attachment:
             part = MIMEBase('application', 'octet-stream')
             part.set_payload(attachment.read())
 
@@ -39,7 +39,7 @@ def send_email(order_id: str, receiver: str, filename: str):
         text = email.as_string()
 
         server.sendmail(SMTP_USER, receiver, text)
-        os.remove(filename)
+        # os.remove(filename)
 
 
 def add_email(receiver: str):

@@ -5,7 +5,7 @@ from mail import send_email
 from celery.schedules import crontab
 
 
-celery = Celery(
+celery_app = Celery(
     'celery_',
     broker='redis://localhost:6379/0',
     backend='redis://localhost:6379/0',
@@ -13,15 +13,13 @@ celery = Celery(
 )
 
 
-@celery.task
-def process_image(order, src_filename):
+@celery_app.task
+def process_image(order, receiver, src_filename):
     blur_image_new(order=order, src_filename=src_filename)
-    # return f'File {src_filename} blurred'
-    print(order)
-    return order
+    return order, receiver, src_filename
 
 
-@celery.on_after_configure.connect
+@celery_app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs) -> None:
     if isinstance(sender, Celery):
         sender.add_periodic_task(10, send_files.s(kwargs['kwargs']['receiver']))
@@ -31,17 +29,18 @@ def setup_periodic_tasks(sender, **kwargs) -> None:
         )
 
 
-@celery.task
-def send_files(order: str, receiver: str, filename: str) -> tuple[str, int]:
+@celery_app.task
+def send_files(data: tuple[str, int]):  # данные приходят кортежем, поэтому тут указываем один параметр...
+    order, receiver, filename = data  # ...а тут делаем распаковку кортежа
     send_email(order_id=order, receiver=receiver, filename=filename)
     return 'OK', 200
 
 
-@celery.task
+@celery_app.task
 def subscribe_user(receiver: str) -> tuple[str, int]:
     return f'Add user {receiver} to subscribers', 200
 
 
-@celery.task
+@celery_app.task
 def unsubscribe_user(receiver: str) -> tuple[str, int]:
     return f'Delete user {receiver} from subscribers processed', 200
