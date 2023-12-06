@@ -28,7 +28,7 @@ def process_images(receiver):
     counter = 1
     for file in os.listdir(f'src_files/{order}/'):
         task1 = process_image.s(order=order, receiver=receiver, src_filename=file)
-        task2 = send_files.s()
+        task2 = send_files.s(message="hello")
         task_chain = chain(task1 | task2)
         # import pdb; pdb.set_trace()
         result = task_chain.apply_async()

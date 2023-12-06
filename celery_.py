@@ -30,8 +30,9 @@ def setup_periodic_tasks(sender, **kwargs) -> None:
 
 
 @celery_app.task
-def send_files(data: tuple[str, int]):  # данные приходят кортежем, поэтому тут указываем один параметр...
+def send_files(data: tuple[str, int], message):  # данные приходят кортежем, поэтому тут указываем один параметр...
     order, receiver, filename = data  # ...а тут делаем распаковку кортежа
+    print(message)
     send_email(order_id=order, receiver=receiver, filename=filename)
     return 'OK', 200
 
